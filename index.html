@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Kesuv — Raskroy buyurtma</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --wood-dark:#2E2418;
+    --wood:#4A382A;
+    --sawdust:#EFE9DD;
+    --sawdust-2:#E3DBC9;
+    --steel:#4C5C68;
+    --steel-dark:#333F48;
+    --hazard:#F2B705;
+    --danger:#B4452E;
+    --ok:#3E6B4A;
+    --paper:#FBF9F4;
+    --line:#D8CCB4;
+    --text:#2A2118;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--sawdust);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:1180px;margin:0 auto;padding:0 20px 60px;}
+
+  /* ---- Header ---- */
+  .topbar{
+    background:var(--wood-dark);
+    color:var(--sawdust);
+    padding:18px 20px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:6px solid var(--hazard);
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:38px;height:38px;border-radius:6px;
+    background:repeating-linear-gradient(45deg,var(--hazard) 0 8px,var(--wood-dark) 8px 16px);
+    border:2px solid var(--hazard);
+  }
+  .brand-name{font-family:'Archivo Expanded',sans-serif;font-weight:800;font-size:20px;letter-spacing:0.5px;}
+  .brand-sub{font-size:11px;color:#C9BFA8;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+
+  /* ---- Client form ---- */
+  .client-card{
+    background:var(--paper);
+    margin-top:22px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 22px;
+    display:grid;
+    grid-template-columns:1fr 1fr 1.4fr auto auto;
+    gap:14px;
+    align-items:end;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--wood);}
+  .field input{
+    border:1.5px solid var(--line);
+    background:#fff;
+    border-radius:6px;
+    padding:10px 12px;
+    font-size:14px;
+    font-family:'Inter',sans-serif;
+    color:var(--text);
+  }
+  .field input:focus{outline:none;border-color:var(--steel);}
+
+  .btn{
+    border:none;border-radius:6px;padding:11px 16px;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;
+    cursor:pointer;display:flex;align-items:center;gap:8px;justify-content:center;
+    transition:transform .08s ease, filter .15s ease;
+    white-space:nowrap;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-download{background:var(--steel-dark);color:#fff;}
+  .btn-download:hover{filter:brightness(1.15);}
+  .btn-order{background:var(--hazard);color:var(--wood-dark);}
+  .btn-order:hover{filter:brightness(1.08);}
+
+  /* ---- Section label ---- */
+  .section-title{
+    font-family:'Archivo Expanded',sans-serif;
+    font-weight:700;font-size:15px;color:var(--wood-dark);
+    margin:30px 2px 10px;display:flex;align-items:center;gap:10px;
+  }
+  .section-title .count{
+    background:var(--wood-dark);color:var(--sawdust);
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    padding:2px 9px;border-radius:20px;
+  }
+
+  /* ---- Table ---- */
+  .table-wrap{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  thead th{
+    background:var(--wood);
+    color:var(--sawdust);
+    font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;
+    text-transform:uppercase;letter-spacing:0.5px;
+    padding:12px 10px;text-align:center;
+    border-right:1px solid rgba(255,255,255,0.08);
+  }
+  thead th:last-child{border-right:none;}
+  tbody td{
+    padding:11px 10px;text-align:center;
+    border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace;
+  }
+  tbody td.name-cell{font-family:'Inter',sans-serif;font-weight:500;text-align:left;padding-left:16px;}
+  tbody tr:nth-child(even){background:#F5F0E5;}
+  tbody tr:hover{background:#EFE6D3;}
+  .empty-row td{
+    font-family:'Inter',sans-serif;color:#8A7E68;padding:30px;font-size:14px;
+  }
+
+  .edge-icon{display:inline-flex;gap:3px;align-items:center;cursor:pointer;}
+  .edge-bar{
+    width:9px;height:22px;border-radius:2px;
+    background:#D8CCB4;border:1.5px solid #B8A87E;
+  }
+  .edge-bar.on{background:var(--hazard);border-color:#B8860B;}
+  .edge-core{width:14px;height:16px;background:#BFA980;border-radius:1px;}
+
+  .tex-badge{
+    display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700;
+    font-family:'Inter',sans-serif;
+  }
+  .tex-badge.yes{background:#E4EFE6;color:var(--ok);}
+  .tex-badge.no{background:#F1ECE0;color:#9A8F78;}
+
+  .row-actions{display:flex;gap:6px;justify-content:center;}
+  .icon-btn{
+    width:30px;height:30px;border-radius:6px;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;color:var(--wood);font-size:15px;
+  }
+  .icon-btn:hover{background:#E3DBC9;}
+  .icon-btn.del:hover{background:#F5DBD3;color:var(--danger);}
+
+  /* ---- Add row toolbar ---- */
+  .add-toolbar{
+    background:var(--wood-dark);
+    border-radius:10px;
+    margin-top:14px;
+    padding:14px;
+    display:grid;
+    grid-template-columns:0.85fr 0.85fr 0.7fr 0.8fr 0.9fr 0.9fr 1.3fr auto;
+    gap:10px;align-items:center;
+  }
+  .add-toolbar input{
+    width:100%;border:1.5px solid #5A4A38;background:#3A2E22;color:var(--sawdust);
+    border-radius:6px;padding:9px 10px;font-size:13px;font-family:'JetBrains Mono',monospace;
+  }
+  .add-toolbar input::placeholder{color:#9C8D74;font-family:'Inter',sans-serif;}
+  .add-toolbar input.name-input{font-family:'Inter',sans-serif;}
+  .add-toolbar input:focus{outline:none;border-color:var(--hazard);}
+  .toggle-cell{display:flex;justify-content:center;}
+  .add-toolbar .btn-add{
+    background:var(--hazard);color:var(--wood-dark);padding:10px 20px;font-weight:700;
+  }
+  .tex-toggle{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    background:#3A2E22;border:1.5px solid #5A4A38;border-radius:6px;padding:9px 6px;cursor:pointer;
+    color:#C9BFA8;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  }
+  .tex-toggle.on{background:#2F4A38;border-color:var(--ok);color:#BFE3CB;}
+
+  .hint-bar{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:8px;padding:0 4px;font-size:11.5px;color:#8A7E68;
+  }
+
+  @media (max-width:900px){
+    .client-card{grid-template-columns:1fr 1fr;}
+    .add-toolbar{grid-template-columns:1fr 1fr;}
+    table{font-size:12px;}
+    thead th{padding:9px 5px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <div class="brand-name">KESUV</div>
+      <div class="brand-sub">Raskroy buyurtma xizmati</div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="client-card">
+    <div class="field">
+      <label>Ism</label>
+      <input id="cName" type="text" placeholder="Ismingiz">
+    </div>
+    <div class="field">
+      <label>Telefon</label>
+      <input id="cPhone" type="text" placeholder="+998 XX XXX XX XX">
+    </div>
+    <div class="field">
+      <label>Material nomi</label>
+      <input id="cMaterial" type="text" placeholder="Masalan: LDSP Дуб Белый 16мм">
+    </div>
+    <button class="btn btn-download" onclick="downloadExcel()">⬇ Faylni yuklab olish</button>
+    <button class="btn btn-order" onclick="sendOrder()">📩 Buyurtma yuborish</button>
+  </div>
+
+  <div class="section-title">Detallar ro'yxati <span class="count" id="rowCount">0</span></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">Uzunlik (mm)</th>
+          <th style="width:12%">Kenglik (mm)</th>
+          <th style="width:10%">Miqdor</th>
+          <th style="width:10%">Tekstura</th>
+          <th style="width:13%">Kromka uzunlik</th>
+          <th style="width:13%">Kromka kenglik</th>
+          <th>Detal nomi</th>
+          <th style="width:9%">Amal</th>
+        </tr>
+      </thead>
+      <tbody id="rowsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="add-toolbar">
+    <input id="nLength" type="number" placeholder="Uzunlik" min="50">
+    <input id="nWidth" type="number" placeholder="Kenglik" min="50">
+    <input id="nQty" type="number" placeholder="Miqdor" min="1" value="1">
+    <div class="tex-toggle" id="nTexture" onclick="toggleTexture()">Yo'q</div>
+    <div class="toggle-cell"><div class="edge-icon" id="edgeL" onclick="event.stopPropagation()"></div></div>
+    <div class="toggle-cell"><div class="edge-icon" id="edgeW" onclick="event.stopPropagation()"></div></div>
+    <input id="nName" class="name-input" type="text" placeholder="Detal nomi (masalan: полка)">
+    <button class="btn btn-add" onclick="addRow()">+ Qo'shish</button>
+  </div>
+  <div class="hint-bar">
+    <span>Kromka belgilarini bosib, qaysi tomonlarga kromka yopishtirilishini tanlang.</span>
+    <span id="totalArea">Umumiy maydon: 0.00 m²</span>
+  </div>
+
+</div>
+
+<script>
+let rows = [];
+let nextId = 1;
+
+// ====== TELEGRAM SOZLAMALARI ======
+// BotFather'dan olgan tokeningizni va chat_id'ni shu yerga yozing.
+const TELEGRAM_BOT_TOKEN = '';   // masalan: '7123456789:AAExampleTokenHere'
+const TELEGRAM_CHAT_ID   = '';   // masalan: '123456789' yoki '-1001234567890'
+// ===================================
+
+// edge state for the add-row toolbar: {a:false,b:false} = two sides
+let newEdgeL = {a:false,b:false};
+let newEdgeW = {a:false,b:false};
+
+function edgeIconHTML(state, onA, onB){
+  return `
+    <div class="edge-bar ${state.a?'on':''}" onclick="${onA}"></div>
+    <div class="edge-core"></div>
+    <div class="edge-bar ${state.b?'on':''}" onclick="${onB}"></div>
+  `;
+}
+
+function renderNewEdgeIcons(){
+  document.getElementById('edgeL').innerHTML = edgeIconHTML(newEdgeL, "toggleNewEdge('L','a')", "toggleNewEdge('L','b')");
+  document.getElementById('edgeW').innerHTML = edgeIconHTML(newEdgeW, "toggleNewEdge('W','a')", "toggleNewEdge('W','b')");
+}
+function toggleNewEdge(which, side){
+  if(which==='L') newEdgeL[side] = !newEdgeL[side];
+  else newEdgeW[side] = !newEdgeW[side];
+  renderNewEdgeIcons();
+}
+
+let newTexture = false;
+function toggleTexture(){
+  newTexture = !newTexture;
+  const el = document.getElementById('nTexture');
+  el.classList.toggle('on', newTexture);
+  el.textContent = newTexture ? "Ha" : "Yo'q";
+}
+
+function edgeCount(e){ return (e.a?1:0) + (e.b?1:0); }
+
+function addRow(){
+  const length = parseInt(document.getElementById('nLength').value);
+  const width = parseInt(document.getElementById('nWidth').value);
+  const qty = parseInt(document.getElementById('nQty').value) || 1;
+  const name = document.getElementById('nName').value.trim();
+
+  if(!length || !width){
+    flashInvalid(['nLength','nWidth']);
+    return;
+  }
+  if(!name){
+    flashInvalid(['nName']);
+    return;
+  }
+
+  rows.push({
+    id: nextId++,
+    length, width, qty,
+    texture: newTexture,
+    edgeL: {...newEdgeL},
+    edgeW: {...newEdgeW},
+    name
+  });
+
+  // reset toolbar
+  document.getElementById('nLength').value='';
+  document.getElementById('nWidth').value='';
+  document.getElementById('nQty').value='1';
+  document.getElementById('nName').value='';
+  newTexture=false;
+  document.getElementById('nTexture').classList.remove('on');
+  document.getElementById('nTexture').textContent="Yo'q";
+  newEdgeL={a:false,b:false};
+  newEdgeW={a:false,b:false};
+  renderNewEdgeIcons();
+
+  renderTable();
+}
+
+function flashInvalid(ids){
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    el.style.borderColor = 'var(--danger)';
+    setTimeout(()=>{ el.style.borderColor=''; }, 900);
+  });
+}
+
+function deleteRow(id){
+  rows = rows.filter(r=>r.id!==id);
+  renderTable();
+}
+
+function renderTable(){
+  const body = document.getElementById('rowsBody');
+  document.getElementById('rowCount').textContent = rows.length;
+
+  if(rows.length===0){
+    body.innerHTML = `<tr class="empty-row"><td colspan="8">Hali detal qo'shilmagan. Pastdagi qatordan boshlang.</td></tr>`;
+  } else {
+    body.innerHTML = rows.map(r=>`
+      <tr>
+        <td>${r.length}</td>
+        <td>${r.width}</td>
+        <td>${r.qty}</td>
+        <td><span class="tex-badge ${r.texture?'yes':'no'}">${r.texture?'Ha':"Yo'q"}</span></td>
+        <td>${edgeCount(r.edgeL)}</td>
+        <td>${edgeCount(r.edgeW)}</td>
+        <td class="name-cell">${escapeHTML(r.name)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn del" onclick="deleteRow(${r.id})" title="O'chirish">🗑</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  const totalArea = rows.reduce((sum,r)=> sum + (r.length*r.width*r.qty)/1e6, 0);
+  document.getElementById('totalArea').textContent = `Umumiy maydon: ${totalArea.toFixed(2)} m²`;
+}
+
+function escapeHTML(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function buildWorkbook(){
+  const name = document.getElementById('cName').value || '-';
+  const phone = document.getElementById('cPhone').value || '-';
+  const material = document.getElementById('cMaterial').value || '-';
+
+  const aoa = [
+    [material, '', phone, '', name],
+    [],
+    ['Длина','Ширина','','Количество','Текстура','Кромка длина-1','Кромка длина-2','Кромка ширина-1','Кромка ширина-2','Наименование детали'],
+    ...rows.map(r=>[
+      r.length, r.width, '', r.qty, r.texture?1:0,
+      r.edgeL.a?1:'', r.edgeL.b?1:'',
+      r.edgeW.a?1:'', r.edgeW.b?1:'',
+      r.name
+    ])
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:10},{wch:10},{wch:3},{wch:10},{wch:9},{wch:14},{wch:14},{wch:14},{wch:14},{wch:22}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Raskroy');
+
+  const fname = `${name}_${phone.replace(/\D/g,'')}_${material}`.slice(0,80).replace(/[\\/:*?"<>|]/g,'') + '.xlsx';
+  return {wb, fname, name, phone, material};
+}
+
+function downloadExcel(){
+  if(rows.length===0){ alert("Avval kamida bitta detal qo'shing."); return; }
+  const {wb, fname} = buildWorkbook();
+  XLSX.writeFile(wb, fname);
+}
+
+async function sendOrder(){
+  if(rows.length===0){ alert("Avval kamida bitta detal qo'shing."); return; }
+
+  if(!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID){
+    alert("Bot sozlanmagan. Sahifa kodidagi TELEGRAM_BOT_TOKEN va TELEGRAM_CHAT_ID qiymatlarini to'ldiring.");
+    return;
+  }
+
+  const btn = document.querySelector('.btn-order');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Yuborilmoqda...';
+
+  try{
+    const {wb, fname, name, phone, material} = buildWorkbook();
+    const wbArray = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const blob = new Blob([wbArray], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+
+    let caption = `📦 Yangi buyurtma\nIsm: ${name}\nTelefon: ${phone}\nMaterial: ${material}\nDetallar soni: ${rows.length}`;
+    if(caption.length > 1024) caption = caption.slice(0,1020) + '...';
+
+    const form = new FormData();
+    form.append('chat_id', TELEGRAM_CHAT_ID);
+    form.append('caption', caption);
+    form.append('document', blob, fname);
+
+    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
+      method: 'POST',
+      body: form
+    });
+    const data = await res.json();
+
+    if(data.ok){
+      btn.textContent = '✅ Yuborildi!';
+      setTimeout(()=>{ btn.textContent = originalText; btn.disabled=false; }, 2500);
+    } else {
+      throw new Error(data.description || 'Noma\'lum xatolik');
+    }
+  } catch(err){
+    alert("Yuborishda xatolik: " + err.message);
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+
+renderNewEdgeIcons();
+renderTable();
+</script>
+
+</body>
+</html>
